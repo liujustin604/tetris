@@ -52,7 +52,6 @@ pub(crate) fn render<T: Renderer>(
     let cell_size = cell_size(size);
     let (board_left, board_top) = board_location(size, cell_size);
     let line_width = cell_size / 20.0;
-    println!("{cell_size}");
     let board_info = BoardInfo {
         cell_size,
         board_left,
