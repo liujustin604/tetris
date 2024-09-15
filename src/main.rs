@@ -33,54 +33,61 @@ fn handle_keyboard_input(event: KeyEvent, state: &mut AppState, window: &Window)
     match event.logical_key {
         Key::Named(x) => match x {
             NamedKey::ArrowUp => {
-                rotate_piece(state, MovementType::Right);
-                window.request_redraw();
+                state_change(state, StateChange::Rotate(MovementType::Right), window);
             }
             NamedKey::ArrowLeft => {
-                move_piece(state, MovementType::Left);
-                window.request_redraw();
+                state_change(state, StateChange::Move(MovementType::Left), window);
             }
             NamedKey::ArrowRight => {
-                move_piece(state, MovementType::Right);
-                window.request_redraw();
+                state_change(state, StateChange::Move(MovementType::Right), window);
             }
             NamedKey::ArrowDown => {
-                move_down(state);
-                window.request_redraw();
+                state_change(state, StateChange::SoftDrop, window);
             }
             NamedKey::Space => {
-                hard_drop(state);
-                window.request_redraw();
+                state_change(state, StateChange::HardDrop, window);
             }
             NamedKey::Control => {
-                rotate_piece(state, MovementType::Left);
-                window.request_redraw();
+                state_change(state, StateChange::Rotate(MovementType::Left), window);
             }
             NamedKey::Shift => {
-                hold_piece(state);
-                window.request_redraw();
+                state_change(state, StateChange::HoldPiece, window);
             }
             _ => {}
         },
         Key::Character(x) => match x.as_str() {
             "x" => {
-                rotate_piece(state, MovementType::Right);
-                window.request_redraw();
+                state_change(state, StateChange::Rotate(MovementType::Right), window);
             }
             "z" => {
-                rotate_piece(state, MovementType::Left);
-                window.request_redraw();
+                state_change(state, StateChange::Rotate(MovementType::Left), window);
             }
             "c" => {
-                hold_piece(state);
-                window.request_redraw();
+                state_change(state, StateChange::HoldPiece, window);
             }
             _ => {}
         },
         _ => {}
     }
 }
-
+#[derive(Debug, Clone)]
+enum StateChange {
+    Rotate(MovementType),
+    HoldPiece,
+    HardDrop,
+    SoftDrop,
+    Move(MovementType),
+}
+fn state_change(state: &mut AppState, change: StateChange, window: &Window) {
+    match change {
+        StateChange::Rotate(rotation_type) => rotate_piece(state, rotation_type),
+        StateChange::HoldPiece => hold_piece(state),
+        StateChange::HardDrop => hard_drop(state),
+        StateChange::SoftDrop => { move_down(state); }
+        StateChange::Move(movement_type) => move_piece(state, movement_type),
+    }
+    window.request_redraw();
+}
 fn hard_drop(state: &mut AppState) {
     while !move_down(state) {}
 }
@@ -212,7 +219,6 @@ fn main() {
     let event_loop = EventLoop::new().expect("Could not create event loop");
     let (context, gl_display, window, surface) = create_window(&event_loop);
     let mut canvas = create_canvas(gl_display, &window);
-
     let mut state = AppState::new();
 
     canvas
